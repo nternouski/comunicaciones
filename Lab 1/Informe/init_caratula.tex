@@ -1,0 +1,60 @@
+\usepackage{datetime}% http://ctan.org/pkg/datetime
+\newdateformat{mifecha}{La Plata, \monthname[\THEMONTH] de \THEYEAR}
+\makeatletter
+\renewcommand{\monthnamespanish}[1][\month]{%
+	\@orgargctr=#1\relax
+	\ifcase\@orgargctr
+	\PackageError{datetime}{Invalid Month number \the\@orgargctr}{%
+		Month numbers should go from 1 to 12}%
+	\or Enero%
+	\or Febrero%
+	\or Marzo%
+	\or Abril%
+	\or Mayo%
+	\or Junio%
+	\or Julio%
+	\or Agosto%
+	\or Septiembre%
+	\or Octubre%
+	\or Noviembre%
+	\or Diciembre%
+	\else \PackageError{datetime}{Invalid Month number \the\@orgargctr}{%
+		Month numbers should go from 1 to 12}%
+	\fi}
+
+% Caratula:
+	% En Primer hoja. Especificar título del proyecto, autores y fecha.
+
+\renewcommand{\maketitle}{%
+	\begin{titlepage}
+		\singlespacing
+		\begin{center}
+			\begin{minipage}[t][7.6cm]{10.5cm}
+				\begin{center}
+					\centering
+					{\includegraphics[width=1\textwidth]{imagenes/logos.pdf}\par}
+					\vspace{2cm}
+					{\Large\textbf{Laboratorio 1}\par}\vfill
+					{\LARGE\textbf{Demodulación de señales con Dongle SDR}\par}\vfill
+					\vspace{10mm}
+					{\Large Comunicaciones (E0311)\par}
+					\vspace{4cm}
+				
+					{\large
+						\begin{tabular}{rll}
+							Ternouski& Sebastian~Nahuel& \texttt{756/6} \\
+						\end{tabular}
+					}
+				\end{center}
+			\end{minipage}
+			\vfill
+			{\large \par \mifecha\today \par}
+		\end{center}
+	\end{titlepage}
+	\if@twoside
+	\thispagestyle{empty}
+	\cleardoublepage
+	\else
+	\addtocounter{page}{1}
+	\fi
+}

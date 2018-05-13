@@ -1,0 +1,91 @@
+\documentclass[a4paper, 11pt, spanish]{article}
+\usepackage[spanish, mexico]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{epstopdf}
+\usepackage{csquotes}
+\usepackage{booktabs}
+\usepackage{helvet}
+\usepackage{mathptmx}
+\usepackage[margin=1.25in]{geometry}
+\usepackage{upquote}
+\usepackage{sectsty}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage[dvipsnames]{xcolor}
+\definecolor{azulOscuro}{rgb}{0.0, 0.28, 0.67}
+\definecolor{verdeCopado}{rgb}{0.13, 0.55, 0.13}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{appendix}
+\renewcommand{\appendixname}{Anexo}
+\renewcommand{\appendixtocname}{Anexo}
+\renewcommand{\appendixpagename}{\normalfont\bfseries Anexo}
+\usepackage{etoolbox} % we load it for the workaround
+% workaround
+\makeatletter
+\appto{\appendices}{\def\Hy@chapapp{Appendix}}
+\makeatother
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{listings}
+\input{headerlisting.tex}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{tikz}
+\usepackage{setspace}
+\usepackage{hyperref} % Es para la url o el indice
+\hypersetup{
+	colorlinks=true,
+	linkcolor=black,
+	citecolor=verdeCopado,
+	filecolor=PineGreen,
+	urlcolor=azulOscuro,
+	linktoc=all,
+	pdftitle={Informe de proyecto 1}
+}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\allsectionsfont{\normalfont\sffamily\bfseries}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{multirow}
+\usepackage{adjustbox}
+
+\usepackage{cite}
+\usepackage{apacite}
+\bibliographystyle{apacite}
+\AtBeginDocument{
+	\renewcommand{\BBOP}{[}
+	\renewcommand{\BBCP}{]}
+}
+
+\input{init_caratula.tex}
+
+% Para estilizar código
+\lstset
+{
+	basicstyle=\footnotesize\ttfamily,
+	language=c++,
+	frame=none,
+	numbers=none
+}
+
+\newcommand{\code}[1]{\texttt{#1}}
+
+\begin{document}
+	\def\arraystretch{1.5}
+	\renewcommand\refname{Referencias}
+	\hypersetup{pageanchor=false}
+	\maketitle
+	\tableofcontents % indice de contenidos
+	\clearpage
+	\addtocontents{toc}{\protect\thispagestyle{empty}}
+	\clearpage
+	\hypersetup{pageanchor=true}
+
+	\setcounter{page}{1}
+
+	\input{desarrollo.tex}
+
+	\clearpage
+
+	\phantomsection
+	\bibliography{biblio}
+
+	\input{apendice.tex}
+\end{document}
