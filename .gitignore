@@ -1,0 +1,39 @@
+## Core latex/pdflatex auxiliary files:
+**.aux
+**.lof
+**.log
+**.lot
+**.fls
+**.ist
+**.out
+**.toc
+**.fmt
+**.fot
+**.cb
+**.cb2
+
+## Bibliography auxiliary files (bibtex/biblatex/biber):
+**.bbl
+**.bcf
+**.blg
+**-blx.aux
+**-blx.bib
+**.run.xml
+
+## Build tool auxiliary files:
+**.fdb_latexmk
+**.synctex
+**.synctex(busy)
+**.synctex.gz
+**.synctex.gz(busy)
+**.pdfsync
+
+# glossaries
+**.acn
+**.acr
+**.glg
+**.glo
+**.gls
+**.glsdefs
+entregable.pdf
+presupuesto.pdf
