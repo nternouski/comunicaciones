@@ -2,4 +2,10 @@
 	En el presente laboratorio se espera dar las bases de la teoría de las comunicaciones para la demodulación de una radio FM y aplicarlas sobre dispositivos físicos.
 Para ello se toma como referencia el libro \emph{Principles of Communications} \cite{PrinciplesofCommunications}.
 
+La modulación de FM se trata de una modulación angular no lineal y idealmente se basa en transmitir el mensaje en la fase de la portadora (logrando una desviación de face según el mensaje) y la amplitud de la portadora mantenerla constante. Esto es, la señal modulada que sera transmitida por el canal se traduce en:
+$$
+	x_c (t) = A_c \cos \left[ 2 \pi f_c t + k_f \int_{-\infty}^{t} m(\alpha) d\alpha \right]
+$$
+
 \section{Desarrollo}
+En la demodulación se trata de reconstruir el mensaje $m(t)$ a partir de la señal que recibe la antena, que como se mencionó anteriormente es $x_c(t)$
