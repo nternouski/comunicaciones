@@ -1,11 +1,89 @@
 \section{Introducción}
-	En el presente laboratorio se espera dar las bases de la teoría de las comunicaciones para la demodulación de una radio FM y aplicarlas sobre dispositivos físicos.
+	En el presente laboratorio se espera dar las bases de la teoría de las comunicaciones para la demodulación de una radio FM y aplicarlas sobre un dispositivo físico.
 Para ello se toma como referencia el libro \emph{Principles of Communications} \cite{PrinciplesofCommunications}.
 
 La modulación de FM se trata de una modulación angular no lineal y idealmente se basa en transmitir el mensaje en la fase de la portadora (logrando una desviación de face según el mensaje) y la amplitud de la portadora mantenerla constante. Esto es, la señal modulada que sera transmitida por el canal se traduce en:
 $$
-	x_c (t) = A_c \cos \left[ 2 \pi f_c t + k_f \int_{-\infty}^{t} m(\alpha) d\alpha \right]
+	x_c (t) = A_c \cos \left( 2 \pi f_c t + k_f \int_{-\infty}^{t} m(\alpha) d\alpha \right)
 $$
 
+Donde $k_f$ es la constante desviación de frecuencia y es definido como:
+$$
+	k_f = \frac{\Delta f}{max|m(t)|}
+$$
+
+
 \section{Desarrollo}
-En la demodulación se trata de reconstruir el mensaje $m(t)$ a partir de la señal que recibe la antena, que como se mencionó anteriormente es $x_c(t)$
+En la demodulación se trata de reconstruir el mensaje $m(t)$ a partir de la señal que recibe la antena, que como se mencionó anteriormente es $x_c(t)$.
+Para ello se utilizó el lenguaje python con las siguientes librerías para la implementación digital del circuito:
+\begin{itemize}
+	\item \texttt{rtlsdr}: Contiene funciones para poder controlar y usar el dongle SDR.
+	\item \texttt{numpy}: Biblioteca de funciones matemáticas de alto nivel para operar con vectores o matrices
+	\item \texttt{scipy}: También es una librería pero se basa más en operaciones que se utilizan en el procesamiento de señales y puntualmente con la sub librería \texttt{io} es posible realizar operaciones como guardar o abrir un archivo. 
+	\item \texttt{matplotlib}: Es utilizado para generar gráficos que serón exportados a formato pdf. 
+\end{itemize}
+
+\subsection{Generador de una muestra de FM}
+El archivo \texttt{sample.py} contiene el algoritmo para generar una muestra de la estación de radio 105.3 MHz, el cual utiliza las funciones de \texttt{utils.py} para demodular la señal que se obtiene del Dongle.
+
+Al ejecutar a través del script dado, se debe pasar un parámetro que determina si se decea crear una nueva muestra del dongle y guardarlo en un archivo llamado \texttt{FMcampture.npy}, ingresar 0 (cero), o si se quiere demodular a través de un archivo guardado previamente ingresar 1.
+Por ejemplo: \texttt{./script.sh 1} ejecutara la demodulación de el archivo fuente y se escuchara el sonido resultante. Cabe destacar que el script pedira permisos de administrador para poder usar las librerías de rtlsdr.
+
+El primer paso es tomar las muestras, para ello se llama a la función \emph{GetSample}, la cual se inicializa los parámetros necesarios para el rtlsdr y toma N muestras con una cierta ganancia \emph{gain}.
+La estación en cuestión se encuentra centrada en \emph{f\_offset} de tal manera de evitar interferencias en continua.
+La figura \ref{fig:xc_offset_spectrum} muestra el espectro de la señal obtenida del dispositivo.
+\begin{figure}[ht!]
+	\centering
+	\includegraphics[scale=0.7]{../xc_offset_spectrum.pdf}
+	\caption{Espectro de la muestra capturada.}
+	\label{fig:xc_offset_spectrum}
+\end{figure}
+
+Posteriormente se pasa a banda base usando la función \emph{ToBaseBand}, esta función lo que hace es multiplicar la señal por una exponencial, lo que se traduce en el espectro como un desplazamiento en frecuencia, quedando la \emph{xc} centrada en frecuencia cero. Es decir:
+$$
+	x_b = x_c \cdot e^{-j 2 \pi f_{o_s}} \quad \quad f_{o_s} = \frac{f_{offset}}{f_s}
+$$
+Se puede observar el cambio en la figura \ref{fig:x_baseband_spectrum}.
+\begin{figure}[ht!]
+	\centering
+	\includegraphics[scale=0.7]{../x_baseband_spectrum.pdf}
+	\caption{Señal xc en banda base.}
+	\label{fig:x_baseband_spectrum}
+\end{figure}
+
+Ahora que se tiene la señal $x_b$ en banda base, se procede al filtrado y diesmado.
+La función \emph{FilterAndDownSample} tiene este propósito, en ella se calculan los coeficiente adecuados para armar un filtro con las características mostradas en la figura \ref{fig:filter_charac}, sabiendo que el ancho de banda de los canales comerciales es de $f_{bw} = 180 \mbox{kHz}$.
+
+Se puede observar en el apéndice \ref{ap:utils.py} (línea 67) la función \emph{remez}\footnote{De la librería \texttt{scipy.signal}, ver más en: \url{https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.remez.html}} es utilizada para la creación del filtro el cual calcula los coeficientes el mismo dee una respuesta de impulso finito (FIR) cuya función de transferencia minimiza el error máximo entre la ganancia deseada y la ganancia realizada en las bandas de frecuencia especificadas utilizando el algoritmo de intercambio Remez.
+En resumen:
+\begin{itemize}
+	\item $1^{er}$ parámetro: \emph{numtaps}, traps es el número de términos en el filtro, o el orden de filtro más uno.
+	\item $2^{do}$ parámetro: es una secuencia que contiene los bordes de la banda.
+	En el ejemplo se tomaron intervalo de cero a el ancho de banda deseado y una caída del filtro que posee un $40\%$ del ancho de pasa bajos. 
+	\item $3^{er}$ parámetro: Una ponderación relativa para dar a cada región de banda. La longitud del peso tiene que ser la mitad de la longitud segundo parámetro.
+	Es decir en el ejemplo se le multiplica por la unidad a las frecuencias que van de cero a $f_{bw}$ y un valor muy chico a las frecuencias que van de $f_{bw} + 40\%$ a $f_s/2$.
+	\item $4^{to}$ parámetro: Frecuencia de muestreo.
+\end{itemize}
+
+\begin{figure}[ht!]
+	\centering
+	\includegraphics[scale=0.8]{../filter_charac.pdf}
+	\caption{Respuesta en frecuencia, que caracteriza el filtro.}
+	\label{fig:filter_charac}
+\end{figure}
+
+\begin{figure}[ht!]
+	\centering
+	\includegraphics[scale=0.7]{../x_downsample_spectrum.pdf}
+	\caption{Señal filtrada y diesmada.}
+	\label{fig:x_downsample_spectrum}
+\end{figure}
+
+\subsubsection{Demodulación}
+La señal resultante de los pasos anteriores todavía no esta demodulada sino que se acondiciona la señal ya que es posible que anteriormente contenga parte de otros canales, entre otros aspectos. 
+
+Para demodular la señal 
+
+\newpage
+
+\subsection{Radio Streaming}

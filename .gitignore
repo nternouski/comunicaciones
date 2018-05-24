@@ -19,6 +19,7 @@
 **-blx.aux
 **-blx.bib
 **.run.xml
+**.pyg
 
 ## Build tool auxiliary files:
 **.fdb_latexmk
@@ -36,4 +37,17 @@
 **.gls
 **.glsdefs
 entregable.pdf
-presupuesto.pdf
+
+
+x_baseband_spectrum.pdf
+x_downsample_spectrum.pdf
+x_downsample.pdf
+xc_offset_spectrum.pdf
+yd_DEP.pdf
+filter_charac.pdf
+
+.directory
+__pycache__
+**.pyc
+**.npy
+**.wav
