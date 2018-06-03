@@ -59,9 +59,9 @@ En resumen:
 \begin{itemize}
 	\item $1^{er}$ parámetro: \emph{numtaps}, traps es el número de términos en el filtro, o el orden de filtro más uno.
 	\item $2^{do}$ parámetro: es una secuencia que contiene los bordes de la banda.
-	En el ejemplo se tomaron intervalo de cero a el ancho de banda deseado y una caída del filtro que posee un $40\%$ del ancho de pasa bajos. 
+	En el ejemplo se tomaron intervalo de cero a el ancho de banda deseado y una caída del filtro que posee un $\caidaFiltro$ del ancho de pasa bajos. 
 	\item $3^{er}$ parámetro: Una ponderación relativa para dar a cada región de banda. La longitud del peso tiene que ser la mitad de la longitud segundo parámetro.
-	Es decir en el ejemplo se le multiplica por la unidad a las frecuencias que van de cero a $f_{bw}$ y un valor muy chico a las frecuencias que van de $f_{bw} + 40\%$ a $f_s/2$.
+	Es decir en el ejemplo se le multiplica por la unidad a las frecuencias que van de cero a $f_{bw}$ y un valor muy chico a las frecuencias que van de $f_{bw} + \caidaFiltro$ a $f_s/2$.
 	\item $4^{to}$ parámetro: Frecuencia de muestreo.
 \end{itemize}
 
@@ -83,6 +83,26 @@ En resumen:
 La señal resultante de los pasos anteriores todavía no esta demodulada sino que se acondiciona la señal ya que es posible que anteriormente contenga parte de otros canales, entre otros aspectos. 
 
 Para demodular la señal 
+
+El resultado de todos los procesos anteriormente mencionados, se puede observar en la figura \ref{fig:yd-DEP}.
+Se puede notar cuatro zonas de interés con diferentes colores\footnote{Para más información ingrese al siguiente \href{https://en.wikipedia.org/wiki/FM\_broadcasting\#Other\_subcarrier\_services}{link}}:
+% CALCULOS
+\FPeval{\leftLimitStereo}{clip(\centeredStereo - \bandStereo)}
+\FPeval{\rightLimitStereo}{clip(\centeredStereo + \bandStereo)}
+
+\begin{itemize}
+	\item Color rojo: señal mono, es el de mayor interés, va de 0 a \limitMono kHz.
+	\item Color verde: Centrada en \pilotTone kHz, se encuentra el tono piloto para el stereo el cual es usado para ayudar a decodificar el audio stereo centrada en \centeredStereo kHz.
+	\item Color naranja: Señal stereo, la banda de \leftLimitStereo k a \centeredStereo k Hz se encuentra el canal izquierdo y de \centeredStereo k a \rightLimitStereo kHz el canal derecho.  
+	\item Color cyan: Una subportadora centrada en \digitalCarrier kHz, se usa para transmitir una señal de sistema de datos de radio digital de ancho de banda angosta, que proporciona características adicionales de la estación de radio.
+\end{itemize}
+
+\begin{figure}[ht!]
+	\centering
+	\includegraphics[scale=0.7]{../yd_DEP.pdf}
+	\caption{Señal (yd) resultante diferenciando las distintas partes.}
+	\label{fig:yd-DEP}
+\end{figure}
 
 \newpage
 

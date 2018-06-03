@@ -54,11 +54,26 @@
 	\renewcommand{\BBCP}{]}
 }
 
+\usepackage[nomessages]{fp}% http://ctan.org/pkg/fp
+
 \input{init_caratula.tex}
 
 \newcommand{\code}[1]{\texttt{#1}}
 
 \begin{document}
+
+	% DEFINITIONS VALUES
+	\newcommand\caidaFiltro{40\%}
+	\newcommand\digitalCarrier{57}
+
+	\newcommand\limitMono{15} % Esta en k
+	\newcommand\centeredStereo{38} % Esta en k
+	\newcommand\bandStereo{15} % Esta en k
+	\newcommand\pilotTone{19} % Esta en k
+
+
+
+
 	\def\arraystretch{1.5}
 	\renewcommand\refname{Referencias}
 	\hypersetup{pageanchor=false}
