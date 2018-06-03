@@ -6,4 +6,4 @@
 #		1 -> indica levantar un archivo previamente guardado y probar
 #####
 sudo python3 sample.py $1
-aplay soundFM.wav -r 47500 -f S16_LE -t wav -c 1
+# aplay soundFM.wav -r 47500 -f S16_LE -t wav -c 1
