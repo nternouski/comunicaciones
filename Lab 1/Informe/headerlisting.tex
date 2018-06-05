@@ -3,6 +3,10 @@
 \usepackage{xcolor}
 \definecolor{keywords}{rgb}{0,0.1,0.6}
 
+\lstset{
+    escapeinside={(*@}{@*)},          % if you want to add LaTeX within your code
+}
+
 \lstdefinestyle{PyStyle}{
 	abovecaptionskip=12pt,
 	breaklines=true,columns=fullflexible,

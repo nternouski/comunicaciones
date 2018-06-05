@@ -17,14 +17,14 @@ async def streaming():
 	# Se configura los parametros
 	sdr.sample_rate = fs
 	sdr.center_freq = fc
-	sdr.gain = 40
+	sdr.gain = 'auto'
 
 	async for samples in sdr.stream():
 		xc = np.array(samples).astype("complex64")
 		x_baseband = ToBaseBand(xc, f_offset, fs)
 		x_filter, fs_y = FilterAndDownSample(x_baseband, fs)
 		yd = Demodulation(x_filter, fs_y)
-		#yd = FilterPreEmphasis(f_offset, fs_y, yd)
+		yd = FilterDeEmphasis(f_offset, fs_y, yd)
 		sd = PlaySound(yd, fs_y)
 		#sd.wait()
 	# to stop streaming:

@@ -67,7 +67,7 @@ def FilterAndDownSample(x, fs):
 	# traps es el número de términos en el filtro, o el orden de filtro más uno.
 	n_taps = 50
 	# Calcule el filtro óptimo minimax utilizando el algoritmo de intercambio Remez.
-	coef = remez(n_taps, [0, f_bw, f_bw*1.4, fs/2], [1, 0], Hz=fs)
+	coef = remez(n_taps, [0, f_bw, f_bw*1.4, fs/2], [1, 0], Hz=fs) # (*@ \label{code:remezFunction} @*)
 	x_filter = lfilter(coef, 1.0, x)
 
 	if PLOT:
@@ -102,7 +102,7 @@ def Demodulation(x, fs):
 	return yd
 
 
-def FilterPreEmphasis(f_offset, fs, yd):
+def FilterDeEmphasis(f_offset, fs, yd): # (*@ \label{code:FilterPreEmphasis} @*)
 	"""
 	Parametros:
 			f_offset:	Frecuencia corrida

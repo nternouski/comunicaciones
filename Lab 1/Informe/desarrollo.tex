@@ -17,7 +17,7 @@ $$
 En la demodulación se trata de reconstruir el mensaje $m(t)$ a partir de la señal que recibe la antena, que como se mencionó anteriormente es $x_c(t)$.
 Para ello se utilizó el lenguaje python con las siguientes librerías para la implementación digital del circuito:
 \begin{itemize}
-	\item \texttt{rtlsdr}: Contiene funciones para poder controlar y usar el dongle SDR.
+	\item \texttt{rtlsdr}: Contiene funciones para poder controlar y usar el dongle SDR, véase \cite{pyrtlsdr}.
 	\item \texttt{numpy}: Biblioteca de funciones matemáticas de alto nivel para operar con vectores o matrices
 	\item \texttt{scipy}: También es una librería pero se basa más en operaciones que se utilizan en el procesamiento de señales y puntualmente con la sub librería \texttt{io} es posible realizar operaciones como guardar o abrir un archivo. 
 	\item \texttt{matplotlib}: Es utilizado para generar gráficos que serón exportados a formato pdf. 
@@ -30,7 +30,8 @@ Al ejecutar a través del script dado, se debe pasar un parámetro que determina
 Por ejemplo: \texttt{./script.sh 1} ejecutara la demodulación de el archivo fuente y se escuchara el sonido resultante. Cabe destacar que el script pedira permisos de administrador para poder usar las librerías de rtlsdr.
 
 El primer paso es tomar las muestras, para ello se llama a la función \emph{GetSample}, la cual se inicializa los parámetros necesarios para el rtlsdr y toma N muestras con una cierta ganancia \emph{gain}.
-La estación en cuestión se encuentra centrada en \emph{f\_offset} de tal manera de evitar interferencias en continua.
+
+La estación en cuestión se encuentra centrada en \emph{f\_offset} de tal manera de evitar interferencias en continua es decir en frecuencia cero. Esto ocurre porque al muestrear la señal provoca que la misma no tenga exactamente media cero. 
 La figura \ref{fig:xc_offset_spectrum} muestra el espectro de la señal obtenida del dispositivo.
 \begin{figure}[ht!]
 	\centering
@@ -54,7 +55,7 @@ Se puede observar el cambio en la figura \ref{fig:x_baseband_spectrum}.
 Ahora que se tiene la señal $x_b$ en banda base, se procede al filtrado y diesmado.
 La función \emph{FilterAndDownSample} tiene este propósito, en ella se calculan los coeficiente adecuados para armar un filtro con las características mostradas en la figura \ref{fig:filter_charac}, sabiendo que el ancho de banda de los canales comerciales es de $f_{bw} = 180 \mbox{kHz}$.
 
-Se puede observar en el apéndice \ref{ap:utils.py} (línea 67) la función \emph{remez}\footnote{De la librería \texttt{scipy.signal}, ver más en: \url{https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.remez.html}} es utilizada para la creación del filtro el cual calcula los coeficientes el mismo dee una respuesta de impulso finito (FIR) cuya función de transferencia minimiza el error máximo entre la ganancia deseada y la ganancia realizada en las bandas de frecuencia especificadas utilizando el algoritmo de intercambio Remez.
+Se puede observar en el apéndice \ref{ap:utils.py} (línea \ref{code:remezFunction}) la función \emph{remez}\footnote{De la librería \texttt{scipy.signal}, véase \href{https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.remez.html}{línk}} es utilizada para la creación del filtro el cual calcula los coeficientes el mismo dee una respuesta de impulso finito (FIR) cuya función de transferencia minimiza el error máximo entre la ganancia deseada y la ganancia realizada en las bandas de frecuencia especificadas utilizando el algoritmo de intercambio Remez.
 En resumen:
 \begin{itemize}
 	\item $1^{er}$ parámetro: \emph{numtaps}, traps es el número de términos en el filtro, o el orden de filtro más uno.
@@ -84,18 +85,7 @@ La señal resultante de los pasos anteriores todavía no esta demodulada sino qu
 
 Para demodular la señal 
 
-El resultado de todos los procesos anteriormente mencionados, se puede observar en la figura \ref{fig:yd-DEP}.
-Se puede notar cuatro zonas de interés con diferentes colores\footnote{Para más información ingrese al siguiente \href{https://en.wikipedia.org/wiki/FM\_broadcasting\#Other\_subcarrier\_services}{link}}:
-% CALCULOS
-\FPeval{\leftLimitStereo}{clip(\centeredStereo - \bandStereo)}
-\FPeval{\rightLimitStereo}{clip(\centeredStereo + \bandStereo)}
-
-\begin{itemize}
-	\item Color rojo: señal mono, es el de mayor interés, va de 0 a \limitMono kHz.
-	\item Color verde: Centrada en \pilotTone kHz, se encuentra el tono piloto para el stereo el cual es usado para ayudar a decodificar el audio stereo centrada en \centeredStereo kHz.
-	\item Color naranja: Señal stereo, la banda de \leftLimitStereo k a \centeredStereo k Hz se encuentra el canal izquierdo y de \centeredStereo k a \rightLimitStereo kHz el canal derecho.  
-	\item Color cyan: Una subportadora centrada en \digitalCarrier kHz, se usa para transmitir una señal de sistema de datos de radio digital de ancho de banda angosta, que proporciona características adicionales de la estación de radio.
-\end{itemize}
+\subsubsection{Densidad espectral de potencia}
 
 \begin{figure}[ht!]
 	\centering
@@ -104,6 +94,26 @@ Se puede notar cuatro zonas de interés con diferentes colores\footnote{Para má
 	\label{fig:yd-DEP}
 \end{figure}
 
+El resultado de todos los procesos anteriormente mencionados, se puede observar en la figura \ref{fig:yd-DEP}.
+Se puede notar cuatro zonas de interés con diferentes colores\footnote{Para más información ingrese al siguiente \href{https://en.wikipedia.org/wiki/FM\_broadcasting\#Other\_subcarrier\_services}{link}}:
+% CALCULOS
+\FPeval{\leftLimitStereo}{clip(\centeredStereo - \bandStereo)}
+\FPeval{\rightLimitStereo}{clip(\centeredStereo + \bandStereo)}
+
+\begin{itemize}
+	\item Color rojo: Señal mono, es el de mayor interés, va de 0 a \limitMono kHz.
+	\item Color verde: En la transmisión FM estéreo, el tono piloto centrada en \pilotTone kHz, indica que hay una información estereofónica. El receptor duplica la frecuencia del tono piloto (\centeredStereo kHz) y lo usa como frecuencia de referencia para demodular la información estéreo.
+	\item Color naranja: Señal stereo, la banda de \leftLimitStereo k a \centeredStereo k Hz se encuentra el canal izquierdo y de \centeredStereo k a \rightLimitStereo kHz el canal derecho.
+	\item Color cyan: Una subportadora centrada en \digitalCarrier kHz, se usa para transmitir una señal de sistema de datos de radio digital de ancho de banda angosta, que proporciona características adicionales de la estación de radio.
+\end{itemize}
+
+\subsubsection{Deénfasis}
+El deénfasis (o de-emphasis en ingles\footnote{Para mas información véase \href{https://en.wikipedia.org/wiki/FM\_broadcasting\#Pre-emphasis\_and_de-emphasis}{link}.}) consiste en disminuir las altas frecuencias en el receptor ya que el transmisor envía la señal con una ganancia elevada en comparación a las bajas frecuencias, esto se debe a que el ruido afecta más a las altas frecuencias.
+Para ellos físicamente se utiliza un circuito RC y en america latina se utiliza una contante $\tau = 75$ para dicho propósito.
+
+El código que realiza esta tarea se encuentra en el apéndice \ref{ap:utils.py}, línea \ref{code:FilterPreEmphasis}.
+
 \newpage
 
 \subsection{Radio Streaming}
+
