@@ -83,7 +83,17 @@ En resumen:
 \subsubsection{Demodulación}
 La señal resultante de los pasos anteriores todavía no esta demodulada sino que se acondiciona la señal ya que es posible que anteriormente contenga parte de otros canales, entre otros aspectos. 
 
-Para demodular la señal 
+Para demodular la señal se optó por un tipo de discriminador de frecuencia llamado discriminador polar.
+Este mide la diferencia de fase entre muestras consecutivas de una señal FM muestreada de forma compleja. Esto se traduce en realizar la siguiente operación (línea \ref{code:demod-conj} del apéndice \ref{ap:utils.py}):
+$$
+	x_d[n] = x[n] \cdot \overline{x}[n-1]
+$$
+Donde $\overline{x}$ es el conjugado de $x$ y luego tomar el angulo de $x_d[n]$ (línea \ref{code:demod-angle} del apéndice \ref{ap:utils.py}):
+$$
+	y_d[n] = \arctan\Big( \frac{I}{R} \Big)
+$$
+
+Más específicamente, toma muestras sucesivas de valores complejos y multiplica la nueva muestra por el conjugado de la muestra anterior. Luego toma el ángulo de este valor complejo. Esta resulta ser la frecuencia instantánea de la señal de FM muestreada.
 
 \subsubsection{Densidad espectral de potencia}
 

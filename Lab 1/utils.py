@@ -11,8 +11,8 @@ import matplotlib.pyplot as plt
 
 
 # Define si se quiere que se hagan los gráficos o no:
-# PLOT = 0 # No se calculan los gráficos
-PLOT = 0  # Se calcula los gráficos
+PLOT = 0 # No se calculan los gráficos
+#PLOT = 1  # Se calcula los gráficos
 
 
 def GetSample(f_station, f_offset, fs, N, gain='auto'):
@@ -97,16 +97,16 @@ def Demodulation(x, fs):
 	# yd = xd - np.mean(xd)
 	# yd = yd/max(abs(yd))
 
-	xd = x[1:] * np.conj(x[:-1])
-	yd = np.angle(xd)
+	xd = x[1:] * np.conj(x[:-1]) # (*@ \label{code:demod-conj} @*)
+	yd = np.angle(xd)  # (*@ \label{code:demod-angle} @*)
 	return yd
 
 
-def FilterDeEmphasis(f_offset, fs, yd): # (*@ \label{code:FilterPreEmphasis} @*)
+def FilterDeEmphasis(fs, yd): # (*@ \label{code:FilterPreEmphasis} @*)
 	"""
 	Parametros:
-			f_offset:	Frecuencia corrida
 			fs:         Frecuencia de muestreo
+			yd:			Señal resultante
 	"""
 	fs_tau = fs * 75e-6		# Constante de tiempo tau
 	x = np.exp(-1/fs_tau)   # Calcula decaimiento del filtro
@@ -220,6 +220,7 @@ def PlaySound(yd, fs):
 	dec_audio = int(fs / audio_freq)
 	fs_audio = fs / dec_audio
 	sound = decimate(yd, dec_audio)
+	print(dec_audio)
 	sd.default.samplerate = fs_audio
 	# print("Frec audio el reproduc: ", sd.default.samplerate)
 	sd.play(sound)
