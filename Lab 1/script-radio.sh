@@ -1,4 +1,5 @@
 #!/bin/bash
 
 ### Para la radio
-sudo python3 radio.py
+cd qt
+sudo python radio.py

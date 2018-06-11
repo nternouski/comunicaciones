@@ -4,36 +4,107 @@
 import sys
 from PyQt4 import QtGui, QtCore
 from centerWidget import CenterWidget
-from mainMenu import setMenuBar
+from radio import Streaming
+from threading import Thread
+
+import time
 
 MAX_FREC_FM = 108.9
 MIN_FREC_FM = 88.0
 
 class Window(QtGui.QMainWindow):
 
-    def __init__(self, parent=None):
-        super(Window, self).__init__(parent)
+	def __init__(self, parent=None):
+		super(Window, self).__init__(parent)
 
-        self.resize(1280, 720)
-        self.setMinimumSize(QtCore.QSize(640,400));
-        self.setWindowTitle('Demodulador FM - Catedra E0311')
-        self.center()
-        self.statusBar()
-        setMenuBar(self.menuBar())
+		self.resize(980, 520)
+		self.setMinimumSize(QtCore.QSize(740, 300))
+		self.setWindowTitle('Demodulador FM - Catedra E0311')
+		self.center()
 
-        # El cuerpo del demodulador
-        self.centerWidget = CenterWidget(self, MIN_FREC_FM, MAX_FREC_FM)
-        self.setCentralWidget(self.centerWidget)
+		self.__setMenuBar()
+		self.statusBar = QtGui.QStatusBar()
+		self.setStatusBar(self.statusBar)
+		
+		# El cuerpo del demodulador
+		self.centerWidget = CenterWidget(self, MIN_FREC_FM, MAX_FREC_FM)
+		self.setCentralWidget(self.centerWidget)
 
-        self.show()
+		self.stationFM = int
+		self.setStationFM(99.1e6)
 
-    def center(self):
-        frameGm = self.frameGeometry()
-        screen = QtGui.QApplication.desktop().screenNumber(
-            QtGui.QApplication.desktop().cursor().pos())
-        centerPoint = QtGui.QApplication.desktop().screenGeometry(screen).center()
-        frameGm.moveCenter(centerPoint)
-        self.move(frameGm.topLeft())
+	def __del__(self):
+		del(self.streaming)
 
-    def close_application(self):
-        sys.exit()
+	def center(self):
+		frameGm = self.frameGeometry()
+		screen = QtGui.QApplication.desktop().screenNumber(QtGui.QApplication.desktop().cursor().pos())
+		centerPoint = QtGui.QApplication.desktop().screenGeometry(screen).center()
+		frameGm.moveCenter(centerPoint)
+		self.move(frameGm.topLeft())
+
+
+	def setStationFM(self, Hz):
+		"""
+		Setea la frecuencia de estación, unidades en Hz
+
+		Parametros:
+				Hz:	Frecuencia de estación FM
+		"""
+		self.stationFM = Hz
+
+	def initStreaming(self):
+		self.streaming = Streaming(self.stationFM)
+		self.updateStatusBar(1)
+		self.streaming.start()
+		self.streaming.play()
+		self.updateStatusBar(2)
+
+	def updateStatusBar(self, typeStatus):
+		switcher = {
+			1: "Init hilos y cargando Buffer...",
+			2: "Reproduciendo radio...",
+			3: "Radio detenida."
+		}
+		self.statusBar.showMessage(switcher.get(typeStatus, ""))
+
+	def startRadio(self):
+		self.sThread = Thread(target=self.initStreaming, name='Inicialización y run Streaming')
+		self.updateStatusBar(4)
+		self.sThread.start()
+
+
+	def stopRadio(self):
+		self.updateStatusBar(3)
+		self.streaming.stop()
+		self.sThread.join()
+
+
+	def __setMenuBar(self):
+		menuBar = self.menuBar()
+		extractActionA = QtGui.QAction("&Acerca de", menuBar)
+		extractActionA.setStatusTip(u'Ver información de la App')
+		extractActionA.triggered.connect(self.__openAboutDialog)
+		extractActionS = QtGui.QAction("&Salir", menuBar)
+		extractActionS.setShortcut("Ctrl+Q")
+		extractActionS.setStatusTip(u'Salir De la aplicación')
+		extractActionS.triggered.connect(self.__closeApplication)
+
+		menuBar.addMenu('&Archivo').addAction(extractActionS)
+		menuBar.addMenu('&Mas Opciones').addAction(extractActionA)
+
+
+	def __closeApplication(self):
+		self.stopRadio()
+		del(self.streaming)
+		sys.exit()
+
+
+	def __openAboutDialog(self):
+		msg = QtGui.QMessageBox()
+		msg.setIcon(QtGui.QMessageBox.Information)
+		msg.setText("Demodulador FM")
+		msg.setInformativeText(u"Autor: Nahuel Ternouski \n\nComunicaciones E0311\nAño 2018")
+		msg.setWindowTitle("Autor")
+		msg.setStandardButtons(QtGui.QMessageBox.Ok)
+		msg.exec_()

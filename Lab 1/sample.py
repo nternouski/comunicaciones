@@ -8,11 +8,11 @@ FILE_CAPTURE = "FMcapture.npy"
 FILE_SOUND = "soundFM.wav"
 
 def main():
-	f_station = int(99.5e6)	# Frecuencia de radio
+	f_station = int(99.1e6)	# Frecuencia de radio
 	f_offset = 250000	        # Desplazamiento para capturar
 	fs = int(1140000)           # Frecuencia de muestreo
-	#N = int(2**20)				# Numero de muestras
-	N = int(332800)				# Numero de muestras
+	N = int(2**22)				# Numero de muestras
+	# N = int(332800)			# Numero de muestras
 
 	if not (len(sys.argv) == 2): 
 		print("Ingrese un numero: 0 o 1..")

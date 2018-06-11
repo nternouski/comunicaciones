@@ -220,7 +220,6 @@ def PlaySound(yd, fs):
 	dec_audio = int(fs / audio_freq)
 	fs_audio = fs / dec_audio
 	sound = decimate(yd, dec_audio)
-	print(dec_audio)
 	sd.default.samplerate = fs_audio
 	# print("Frec audio el reproduc: ", sd.default.samplerate)
 	sd.play(sound)
