@@ -46,7 +46,7 @@ xc_offset_spectrum.pdf
 yd_DEP.pdf
 filter_charac.pdf
 
-
+.directory
 __pycache__
 **.pyc
 **.npy
