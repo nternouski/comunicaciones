@@ -14,6 +14,8 @@ MIN_FREC_FM = 88.0
 
 class Window(QtGui.QMainWindow):
 
+	DEFAULT_FREC_MHZ = 99.1
+
 	def __init__(self, parent=None):
 		super(Window, self).__init__(parent)
 
@@ -25,16 +27,20 @@ class Window(QtGui.QMainWindow):
 		self.__setMenuBar()
 		self.statusBar = QtGui.QStatusBar()
 		self.setStatusBar(self.statusBar)
+		self.sThread = Thread(target=self.initStreaming, name='Inicialización y run Streaming')
+		self.firstPlay = False
 		
 		# El cuerpo del demodulador
 		self.centerWidget = CenterWidget(self, MIN_FREC_FM, MAX_FREC_FM)
 		self.setCentralWidget(self.centerWidget)
 
 		self.stationFM = int
-		self.setStationFM(99.1e6)
+		self.setStationFM(self.DEFAULT_FREC_MHZ * 1e6)
+
 
 	def __del__(self):
 		del(self.streaming)
+
 
 	def center(self):
 		frameGm = self.frameGeometry()
@@ -53,29 +59,42 @@ class Window(QtGui.QMainWindow):
 		"""
 		self.stationFM = Hz
 
+
 	def initStreaming(self):
 		self.streaming = Streaming(self.stationFM)
 		self.updateStatusBar(1)
 		self.streaming.start()
 		self.streaming.play()
-		self.updateStatusBar(2)
+		self.updateStatusBar(3)
+
 
 	def updateStatusBar(self, typeStatus):
 		switcher = {
 			1: "Init hilos y cargando Buffer...",
-			2: "Reproduciendo radio...",
-			3: "Radio detenida."
+			2: "Cargando Buffer...",
+			3: "Reproduciendo radio...",
+			4: "Radio detenida."
 		}
 		self.statusBar.showMessage(switcher.get(typeStatus, ""))
 
-	def startRadio(self):
-		self.sThread = Thread(target=self.initStreaming, name='Inicialización y run Streaming')
-		self.updateStatusBar(4)
-		self.sThread.start()
+
+	def pausePlayRadio(self):
+		if (self.firstPlay == False):
+			# Empieza la radio si es que se presiona play por primera vez
+			self.updateStatusBar(5)
+			self.sThread.start()
+			self.firstPlay = True
+		else:
+			self.updateStatusBar(2)
+			pause = self.streaming.pauseOrPlay(self.stationFM)
+			if pause:
+				self.updateStatusBar(4)
+			else:
+				self.updateStatusBar(3)
 
 
 	def stopRadio(self):
-		self.updateStatusBar(3)
+		self.updateStatusBar(4)
 		self.streaming.stop()
 		self.sThread.join()
 

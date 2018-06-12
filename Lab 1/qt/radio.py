@@ -6,26 +6,25 @@ import rtlsdr
 import numpy as np
 from scipy.signal import remez, lfilter, decimate, freqz
 import sounddevice as sd
-from threading import Semaphore, Thread
+from threading import Semaphore, Thread, Lock
 import Queue as queue
 
 FS = 1140000			# Frecuencia de muestreo
-#FS = 2.04e6			
+# FS = 2.04e6
+N_SAMPLE = 332800		# Cantidad de muestras
 F_BW = 180e3
 AUDIO_FREC = 44100.0
-#AUDIO_FREC = 22050.0
-N_TRAPS = 15
-TIME_BUFFER = 5 # En segundos
-FRAMES = 1 # Frames contatenado por muestra
+# AUDIO_FREC = 22050.0
+N_TRAPS = 10
+TIME_BUFFER = 7 		# En segundos
+FRAMES = 3 				# Frames contatenado por muestra
 
 class Streaming:
 	def __init__(self, stationMHz):
 		self.sdr = rtlsdr.RtlSdr()
-		self.semaphorePlay = Semaphore(1)
-
+		
 		self.f_offset = 250000					# Desplazamiento para capturar
 		self.f_station = stationMHz 			# Frecuencia de radio
-		self.N = 332800							# Cantidad de muestras
 
 		self.dec_rate = int(FS / F_BW)
 		self.fs_y = FS / (self.dec_rate)
@@ -48,11 +47,14 @@ class Streaming:
 
 	
 	def start(self):
+		self.semaphorePlay = Semaphore(1)
+		self.lockCapture = Lock()
+		self.lockProcessing = Lock()
+		self.lockListen = Lock()
 		self.stopStreaming = False
-		fc = self.f_station - self.f_offset		# Frecuencia del centro de captura
-		self.sdr.sample_rate = FS
-		self.sdr.center_freq = fc
-		self.sdr.gain = 'auto'
+		self.pauseStreaming = False
+
+		self.setupSDR(FS, self.f_station - self.f_offset)
 
 		self.cThread = Thread(target=self.captureSamples, name='Capturadora de muestras')
 		self.pThread = Thread(target=self.processingSamples, name='Procesamiento de muestras')
@@ -67,6 +69,9 @@ class Streaming:
 
 
 	def play(self):
+		"""
+		Se llama solo una vez
+		"""
 		time.sleep(TIME_BUFFER)
 		print("Reproduciendo..")
 		self.semaphorePlay.release()
@@ -74,10 +79,49 @@ class Streaming:
 
 	def stop(self):
 		self.stopStreaming = True
+		if (self.pauseStreaming == True):
+			self.semaphorePlay.release()
+			self.lockCapture.release()
+			self.lockProcessing.release()
+			self.lockListen.release()
 		self.cThread.join()
 		self.pThread.join()
 		self.lThread.join()
 		print("Stop Streaming")
+	
+	
+	def pauseOrPlay(self, station):
+		"""
+		Pausa o reanuda, no llamarlo sin antes hacer start()
+
+		Devuelve: False si se reanuda, o True si se pausó
+		"""
+		if (self.pauseStreaming == True):
+			# Si esta pausado lo saco de la pausa
+			# y despierto los hilos con la variable condición
+			self.pauseStreaming = False
+			self.setupSDR(FS, station - self.f_offset)
+			self.lockCapture.release()
+			self.lockProcessing.release()
+			self.lockListen.release()
+			self.play()
+			return False
+		else:
+			self.pauseStreaming = True
+			print("Pause Streaming")
+			return True
+
+
+	def setupSDR(self, fs, fc, gain='auto'):
+		"""
+		Parametros:
+			fs: 	Frecuencia de muestreo a captar
+			fc: 	Frecuencia del centro de captura
+			gain:	Ganancia
+		"""
+		self.sdr.sample_rate = fs
+		self.sdr.center_freq = fc
+		self.sdr.gain = gain
 
 
 	def changeStation(self, MHz):
@@ -86,10 +130,12 @@ class Streaming:
 
 	def captureSamples(self):
 		while not (self.stopStreaming):
-			frame = np.array(self.sdr.packed_bytes_to_iq(self.sdr.read_bytes(2*self.N)))
+			frame = np.array(self.sdr.packed_bytes_to_iq(self.sdr.read_bytes(2*N_SAMPLE)))
 			for i in range(FRAMES-1):
-				frame = np.concatenate((frame, np.array(self.sdr.packed_bytes_to_iq(self.sdr.read_bytes(2*self.N)))))
+				frame = np.concatenate((frame, np.array(self.sdr.packed_bytes_to_iq(self.sdr.read_bytes(2*N_SAMPLE)))))
 			self.samplesQueue.put(frame)
+			if self.pauseStreaming:
+				self.lockCapture.acquire()
 
 
 	def processingSamples(self):
@@ -106,6 +152,8 @@ class Streaming:
 			#yd = lfilter([1-x_deemfasis], [1, -x_deemfasis], yd_demod)
 			# Diezmo para que pueda reproducir la placa de sonido
 			self.soundQueue.put(decimate(yd_demod, self.dec_audio))
+			if self.pauseStreaming:
+				self.lockProcessing.acquire()
 
 
 	def listen(self):
@@ -113,6 +161,9 @@ class Streaming:
 		while not (self.stopStreaming):
 			# Cambio de float64 a 32 para stream.write
 			self.stream.write(self.soundQueue.get().astype('float32'))
+			if self.pauseStreaming:
+				self.lockListen.acquire()
+				self.semaphorePlay.acquire()
 
 
 if __name__ == '__main__':
