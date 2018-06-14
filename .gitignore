@@ -41,9 +41,11 @@ entregable.pdf
 
 x_baseband_spectrum.pdf
 x_downsample_spectrum.pdf
+x_downsample_constelation.pdf
 x_downsample.pdf
 xc_offset_spectrum.pdf
 yd_DEP.pdf
+xb_DEP.pdf
 filter_charac.pdf
 
 .directory

@@ -22,6 +22,8 @@ FRAMES = 3 				# Frames contatenado por muestra
 class Streaming:
 	def __init__(self, stationMHz):
 		self.sdr = rtlsdr.RtlSdr()
+		self.validsGains = self.sdr.get_gains()
+		self.indexGain = 10
 		
 		self.f_offset = 250000					# Desplazamiento para capturar
 		self.f_station = stationMHz 			# Frecuencia de radio
@@ -50,22 +52,22 @@ class Streaming:
 		self.semaphorePlay = Semaphore(1)
 		self.lockCapture = Lock()
 		self.lockProcessing = Lock()
-		self.lockListen = Lock()
+		self.lockReproduce = Lock()
 		self.stopStreaming = False
 		self.pauseStreaming = False
-
-		self.setupSDR(FS, self.f_station - self.f_offset)
+		
+		self.setupSDR(FS, self.f_station - self.f_offset, self.validsGains[self.indexGain])
 
 		self.cThread = Thread(target=self.captureSamples, name='Capturadora de muestras')
 		self.pThread = Thread(target=self.processingSamples, name='Procesamiento de muestras')
-		self.lThread = Thread(target=self.listen, name='Escucha')
+		self.rThread = Thread(target=self.reproduce, name='Escucha')
 		# Adquiero el semaforo antes de que empiece los hilos,
 		# para que demodListen tenga datos para procesar
 		self.semaphorePlay.acquire()
 		self.stream.start()
 		self.cThread.start()
 		self.pThread.start()
-		self.lThread.start()
+		self.rThread.start()
 
 
 	def play(self):
@@ -83,10 +85,10 @@ class Streaming:
 			self.semaphorePlay.release()
 			self.lockCapture.release()
 			self.lockProcessing.release()
-			self.lockListen.release()
+			self.lockReproduce.release()
 		self.cThread.join()
 		self.pThread.join()
-		self.lThread.join()
+		self.rThread.join()
 		print("Stop Streaming")
 	
 	
@@ -100,10 +102,10 @@ class Streaming:
 			# Si esta pausado lo saco de la pausa
 			# y despierto los hilos con la variable condición
 			self.pauseStreaming = False
-			self.setupSDR(FS, station - self.f_offset)
+			self.setupSDR(FS, station - self.f_offset, self.validsGains[self.indexGain])
 			self.lockCapture.release()
 			self.lockProcessing.release()
-			self.lockListen.release()
+			self.lockReproduce.release()
 			self.play()
 			return False
 		else:
@@ -112,23 +114,38 @@ class Streaming:
 			return True
 
 
-	def setupSDR(self, fs, fc, gain='auto'):
+	def setupSDR(self, fs, fc, gain):
 		"""
 		Parametros:
 			fs: 	Frecuencia de muestreo a captar
 			fc: 	Frecuencia del centro de captura
-			gain:	Ganancia
+			gain:	Ganancia en db
 		"""
 		self.sdr.sample_rate = fs
 		self.sdr.center_freq = fc
 		self.sdr.gain = gain
 
 
+	def changeGain(self, gain):
+		"""
+		Parametros:
+			gain:	solo puede valer +1 o -1
+
+		Retorna: True en caso que se pudo cambiar (éxito) y su ganancia, False y None en caso de sobrepasar los limites
+		"""
+		if (len(self.validsGains) > (self.indexGain + gain)) and ((self.indexGain + gain) > 0):
+			self.indexGain += gain
+		else:
+			return False, None
+		self.sdr.set_gain(self.validsGains[self.indexGain])
+		return True, self.validsGains[self.indexGain]
+
+
 	def changeStation(self, MHz):
 		self.f_station = MHz
 
 
-	def captureSamples(self):
+	def captureSamples(self): # (*@ \label{code:thread-capture} @*)
 		while not (self.stopStreaming):
 			frame = np.array(self.sdr.packed_bytes_to_iq(self.sdr.read_bytes(2*N_SAMPLE)))
 			for i in range(FRAMES-1):
@@ -138,7 +155,7 @@ class Streaming:
 				self.lockCapture.acquire()
 
 
-	def processingSamples(self):
+	def processingSamples(self): # (*@ \label{code:thread-processing} @*)
 		# Proceso las muestras
 		while not (self.stopStreaming):
 			xc = self.samplesQueue.get().astype("complex64")
@@ -156,13 +173,13 @@ class Streaming:
 				self.lockProcessing.acquire()
 
 
-	def listen(self):
+	def reproduce(self): # (*@ \label{code:thread-reproduce} @*)
 		self.semaphorePlay.acquire()
 		while not (self.stopStreaming):
 			# Cambio de float64 a 32 para stream.write
 			self.stream.write(self.soundQueue.get().astype('float32'))
 			if self.pauseStreaming:
-				self.lockListen.acquire()
+				self.lockReproduce.acquire()
 				self.semaphorePlay.acquire()
 
 

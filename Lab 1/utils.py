@@ -11,8 +11,8 @@ import matplotlib.pyplot as plt
 
 
 # Define si se quiere que se hagan los gráficos o no:
-PLOT = 0 # No se calculan los gráficos
-#PLOT = 1  # Se calcula los gráficos
+# PLOT = 0 # No se calculan los gráficos
+PLOT = 1  # Se calcula los gráficos
 
 
 def GetSample(f_station, f_offset, fs, N, gain='auto'):
@@ -63,11 +63,11 @@ def FilterAndDownSample(x, fs):
 		x:	Señal a filtrar y
 		fs:	Frecuencia de muestreo
 	"""
-	f_bw = 180e3  # FM tiene un ancho de banda de BW=180 kHz
+	f_bw = 200e3  # FM tiene un ancho de banda teorico de BW=180/200 kHz
 	# traps es el número de términos en el filtro, o el orden de filtro más uno.
 	n_taps = 50
 	# Calcule el filtro óptimo minimax utilizando el algoritmo de intercambio Remez.
-	coef = remez(n_taps, [0, f_bw, f_bw*1.4, fs/2], [1, 0], Hz=fs) # (*@ \label{code:remezFunction} @*)
+	coef = remez(n_taps, [0, f_bw, f_bw*1.5, fs/2], [1, 0], Hz=fs) # (*@ \label{code:remezFunction} @*)
 	x_filter = lfilter(coef, 1.0, x)
 
 	if PLOT:
@@ -79,7 +79,7 @@ def FilterAndDownSample(x, fs):
 	fs_y = fs / dec_rate
 	if PLOT:
 		PlotSpectrum(x_downsample, "x downsample", "x_downsample_spectrum.pdf", fs_y)
-		PlotConstelation(x_downsample, "x downsample", "x_downsample.pdf")
+		PlotConstelation(x_downsample, "x downsample", "x_downsample_constelation.pdf")
 	return x_downsample, fs_y
 
 
@@ -145,13 +145,16 @@ def PlotConstelation(x, x_name, file_name):
 		x_name:     Nombre de la variable, sera mostrada como label
 		file_name:  Nombre del archivo a guardar
 	"""
+	limD = -1.5
+	limU = 1.5
 	plt.scatter(np.real(x[0:50000]), np.imag(
 		x[0:50000]), color="blue", alpha=0.05)
+	plt.grid(alpha=0.25)
 	plt.title(x_name)
 	plt.xlabel("Real")
-	plt.xlim(-1.1, 1.1)
+	plt.xlim(limD, limU)
 	plt.ylabel("Imag")
-	plt.ylim(-1.1, 1.1)
+	plt.ylim(limD, limU)
 	plt.savefig(file_name, dpi=300, bbox_inches='tight', pad_inches=0)
 	plt.close()
 
@@ -166,7 +169,7 @@ def PlotFilterCharacteristic(coef, fs):
 	plt.close()
 
 
-def DEP(x, x_name, file_name, fs):
+def DEP(x, x_name, file_name, fs, FM_signal=False):
 	"""
 	Parametros:
 		x:          Señal a realizar el gráfico DEP
@@ -179,10 +182,11 @@ def DEP(x, x_name, file_name, fs):
 	"""
 	plt.psd(x, NFFT=2048, Fs=fs, color="blue")
 	plt.title(x_name)
-	plt.axvspan(0,             15000,         color="red", alpha=0.3)
-	plt.axvspan(19000-500,     19000+500,     color="green", alpha=0.4)
-	plt.axvspan(19000*2-15000, 19000*2+15000, color="orange", alpha=0.3)
-	plt.axvspan(19000*3-1500,  19000*3+1500,  color="c", alpha=0.3)
+	if FM_signal:
+		plt.axvspan(0,             15000,         color="red", alpha=0.3)
+		plt.axvspan(19000-500,     19000+500,     color="green", alpha=0.4)
+		plt.axvspan(19000*2-15000, 19000*2+15000, color="orange", alpha=0.3)
+		plt.axvspan(19000*3-1500,  19000*3+1500,  color="c", alpha=0.3)
 	plt.ticklabel_format(style='plain', axis='y')
 	plt.savefig(file_name, dpi=300, bbox_inches='tight', pad_inches=0)
 	plt.close()

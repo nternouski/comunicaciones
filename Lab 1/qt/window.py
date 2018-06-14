@@ -36,10 +36,12 @@ class Window(QtGui.QMainWindow):
 
 		self.stationFM = int
 		self.setStationFM(self.DEFAULT_FREC_MHZ * 1e6)
+		self.volume = int(5)
 
 
 	def __del__(self):
-		del(self.streaming)
+		if (self.firstPlay == False):
+			del(self.streaming)
 
 
 	def center(self):
@@ -68,20 +70,23 @@ class Window(QtGui.QMainWindow):
 		self.updateStatusBar(3)
 
 
-	def updateStatusBar(self, typeStatus):
+	def updateStatusBar(self, typeStatus, gain=""):
 		switcher = {
 			1: "Init hilos y cargando Buffer...",
 			2: "Cargando Buffer...",
 			3: "Reproduciendo radio...",
-			4: "Radio detenida."
+			4: "Radio detenida.",
+			5: "Limite maximo de volumen alcanzado.",
+			6: "Limite minimo de volumen alcanzado.",
+			7: "Volumen es: "
 		}
-		self.statusBar.showMessage(switcher.get(typeStatus, ""))
+		self.statusBar.showMessage(switcher.get(typeStatus, "") + str(gain))
 
 
 	def pausePlayRadio(self):
 		if (self.firstPlay == False):
 			# Empieza la radio si es que se presiona play por primera vez
-			self.updateStatusBar(5)
+			self.updateStatusBar(0)
 			self.sThread.start()
 			self.firstPlay = True
 		else:
@@ -95,8 +100,27 @@ class Window(QtGui.QMainWindow):
 
 	def stopRadio(self):
 		self.updateStatusBar(4)
-		self.streaming.stop()
-		self.sThread.join()
+		if (self.firstPlay == True):
+			self.streaming.stop()
+			self.sThread.join()
+
+
+	def volumeUp(self):
+		if (self.firstPlay == True):
+			status, gain = self.streaming.changeGain(+1)
+			if not status:
+				self.updateStatusBar(6)
+			else:
+				self.updateStatusBar(7, gain)
+
+
+	def volumeDown(self):
+		if (self.firstPlay == True):
+			status, gain = self.streaming.changeGain(-1)
+			if not status:
+				self.updateStatusBar(6)
+			else:
+				self.updateStatusBar(7, gain)
 
 
 	def __setMenuBar(self):
@@ -115,7 +139,6 @@ class Window(QtGui.QMainWindow):
 
 	def __closeApplication(self):
 		self.stopRadio()
-		del(self.streaming)
 		sys.exit()
 
 

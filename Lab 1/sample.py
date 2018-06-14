@@ -32,9 +32,10 @@ def main():
 	# Convierte las muestras en numpy array
 	xc = np.array(samples).astype("complex64")
 	x_b = ToBaseBand(xc, f_offset, fs)
+	DEP(x_b, "xb DEP", "xb_DEP.pdf", fs)
 	x_filter, fs_y = FilterAndDownSample(x_b, fs)
 	yd = Demodulation(x_filter, fs_y)
-	DEP(yd, "yd DEP", "yd_DEP.pdf", fs_y)
+	DEP(yd, "yd DEP", "yd_DEP.pdf", fs_y, True)
 	yd = FilterDeEmphasis(fs_y, yd)
 	finish_time = time.time() - start_time
 	print("-- Tiempo de computo:", '%.3f' %finish_time, "seg --")

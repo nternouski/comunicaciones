@@ -3,6 +3,41 @@
 \addappheadtotoc
 \appendixpage
 
+\section{Guías}\label{ap:guia}
+
+\subsection{Instalación}
+Se usaron algunas librerías que no se instalan por defecto con el lenguaje python por lo que son necesarias instalarlas manualmente con comandos en la terminal, solo desde una distribución ubuntu o similares como linux mint.
+El fragmento \ref{code:script-instaltion} indica los comandos iniciales para la instalación:
+
+\begin{lstlisting}[caption={Script de intalación},label={code:script-instaltion},style={BashStyle}]
+# Refresca el repositorio
+sudo apt update
+# Actualiza apt
+sudo apt upgrade
+# Instala python 2.7 y pip
+sudo apt install python2.7 python-pip
+# Posicionarse en la carpeta raíz
+# Instala las librerías necesarias de python
+# Importante: Es necesario estar en la carpeta que contiene el archivo requirements.txt (carpeta raíz)
+sudo pip install -r requirements.txt
+\end{lstlisting}
+
+Con estos pasos es posible simular lo mencionado en la sección \ref{sec:sample-generator}. Para la radio en tiempo real es necesario instalar Qt.
+
+Para que no sea muy extenso la guía se deja al lector instalar Qt con la versión cuatro. Tenga en cuenta que dicha instalación dura un par de horas.
+Puede servir de mucha utilidad los siguientes links: \href{http://pyqt.sourceforge.net/Docs/PyQt5/installation.html}{sourceforge} y \href{https://github.com/pyqt/python-qt5/wiki/Installation}{github}, nótese que es para la versión cinco pero al final quedará instalada la version cuatro.
+
+\subsection{Comprobando resultados}
+Existen tres scripts en la carpeta raíz. Cabe destacar que deberá permitir permisos de ejecución con el comando \texttt{chmod} para correrlos.
+
+El script \texttt{script-sample.sh} es para ejecutar lo de la sección \ref{sec:sample-generator}, debe estar conectado el dongle previamente. Al ejecutar a través del script dado, se debe pasar un parámetro que determina si se decea crear una nueva muestra del dongle y guardarlo en un archivo llamado \texttt{FMcampture.npy}, ingresar 0 (cero), o si se quiere demodular a través de un archivo guardado previamente ingresar 1.
+Por ejemplo: \texttt{./script.sh 1} ejecutara la demodulación de el archivo fuente y se escuchara el sonido resultante. Cabe destacar que el script pedirá permisos de administrador para poder usar las librerías de rtlsdr. Nótese que si se quiere generar los gráficos, hay una constante llamada \emph{PLOT} que define si generan o no. 
+
+El script \texttt{script-radio.sh} ejecutara la radio en tiempo real sin interfaz gráfica por 14 segundos. Conectar el dongle previamente.
+
+El script \texttt{script-qt-run.sh} ejecutara la radio pero esta vez con interfaz gráfica. Por defecto la radio tiene configurada una frecuencia de estación a 99.1MHz y no se reproducirá hasta que se haga click en el botón de play.
+\newpage
+
 \section{Código}
 
 \subsection{sample.py}\label{ap:sample.py}
@@ -12,3 +47,8 @@
 
 \subsection{utils.py}\label{ap:utils.py}
 \lstinputlisting[style=PyStyle]{../utils.py}
+
+\newpage
+
+\subsection{radio.py}\label{ap:radio.py}
+\lstinputlisting[style=PyStyle]{../qt/radio.py}
