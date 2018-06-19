@@ -8,7 +8,7 @@ FILE_CAPTURE = "FMcapture.npy"
 FILE_SOUND = "soundFM.wav"
 
 def main():
-	f_station = int(99.1e6)	# Frecuencia de radio
+	f_station = int(105.3e6)	# Frecuencia de radio
 	f_offset = 250000	        # Desplazamiento para capturar
 	fs = int(1140000)           # Frecuencia de muestreo
 	N = int(2**22)				# Numero de muestras

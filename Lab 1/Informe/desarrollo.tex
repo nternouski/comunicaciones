@@ -2,7 +2,8 @@
 	En el presente laboratorio se espera dar las bases de la teoría de las comunicaciones para la demodulación de una radio FM y aplicarlas sobre un dispositivo físico.
 Para ello se toma como referencia el libro \emph{Principles of Communications} \cite{PrinciplesofCommunications}.
 
-La modulación de FM se trata de una modulación angular no lineal y idealmente se basa en transmitir el mensaje en la fase de la portadora (logrando una desviación de face según el mensaje) y la amplitud de la portadora mantenerla constante. Esto es, la señal modulada que sera transmitida por el canal se traduce en:
+La modulación de FM se trata de una modulación angular no lineal y idealmente se basa en transmitir el mensaje en la fase de la portadora (logrando una desviación de face según el mensaje) y la amplitud de la portadora mantenerla constante.
+Esto es, la señal modulada que sera transmitida por el canal se traduce en:
 $$
 	x_c (t) = A_c \cos \left( 2 \pi f_c t + 2 \pi k_f \int_{-\infty}^{t} m(\lambda) d\lambda \right)
 $$
@@ -56,11 +57,11 @@ Se puede observar el cambio en la figura \ref{fig:x_baseband_spectrum}, y su cor
 	\centering
 	\includegraphics[scale=0.8]{../xb_DEP.pdf}
 	\caption{Densidad espectral de potencia la señal $x_b$.}
-	\label{fig:x_baseband_DEP}
+	\label{fig:x_baseband_DEP} 
 \end{figure}
 
 Ahora que se tiene la señal $x_b$, señal en banda base, se procede a realizar el filtrado y diezmado para que entre otras cosas no se sume ruido ni parte de otros canales al siguiente paso que es demodular.
-La función \emph{FilterAndDownSample} en el archivo \texttt{utils.py} tiene este propósito, en ella se calculan los coeficiente adecuados para armar un filtro con las características mostradas en la figura \ref{fig:filter_charac}, sabiendo que el ancho de banda de los canales de radios comerciales es de $f_{bw} = \canalBW \mbox{kHz}$.
+La función \emph{FilterAndDownSample} en el archivo \texttt{utils.py} tiene este propósito, en ella se calculan los coeficiente adecuados para armar un filtro con las características mostradas en la figura \ref{fig:filter_charac}, sabiendo que el ancho de banda de los canales de radios comerciales es de $f_{bw} = \canalBW \mbox{kHz}$, el área verde de la figura \ref{fig:x_baseband_DEP} indica lo que deja pasar dicho filtro.
 
 Se puede observar en el apéndice \ref{ap:utils.py} (línea \ref{code:remezFunction}) la función \emph{remez}\footnote{De la librería \texttt{scipy.signal}, véase \href{https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.remez.html}{línk}} que es utilizada para la creación del filtro, el cual calcula los coeficientes del mismo de una respuesta de impulso finito (FIR) cuya función de transferencia minimiza el error máximo entre la ganancia deseada y la ganancia realizada en las bandas de frecuencia especificadas utilizando el algoritmo de intercambio Remez.
 En resumen, se detallan a continuación los cuatro parámetros que recibe dicha función para confeccionarlos: 
@@ -108,7 +109,7 @@ $$
 $$
 Donde $\overline{x}$ es el conjugado de $x$ y luego tomar el angulo de $x_d[n]$ (línea \ref{code:demod-angle} del apéndice \ref{ap:utils.py}):
 $$
-	y_d[n] = \arctan\Big( \frac{I}{R} \Big)
+	y_d[n] = \arctan\Big( \frac{Imag}{Real} \Big)
 $$
 
 Más específicamente, toma muestras sucesivas de valores complejos y multiplica la nueva muestra por el conjugado de la muestra anterior. Luego toma el ángulo de este valor complejo. Esta resulta ser la frecuencia instantánea de la señal de FM muestreada.
@@ -153,19 +154,21 @@ Se destacan dos tareas que deben ser ejecutadas por separado de forma simultanea
 $$
 	T_p \ll T_c = \frac{N}{f_s}
 $$
+
 Donde $f_s$ es la frecuencia de muestreo; si esto no se cumple se obtendrá interrupciones al escuchar ya que el buffer de reproducción de audio estará vacía.
 
 En el archivo llamado \texttt{radio.py} (véase apéndice \ref{ap:radio.py}) se implementa la radio en cuestión. Se pueden observar los tres hilos de ejecución: 
 \begin{itemize}
 	\item Capturadora: en línea \ref{code:thread-capture}, a diferencia de como se captura las muestras en la sección anterior, en primer lugar se sustituyo la función \emph{read\_samples} por lo que que hace realmente\footnote{Puede verlo en el siguiente \href{https://github.com/roger-/pyrtlsdr/blob/master/rtlsdr/rtlsdr.py\#L480}{línk}.}.
-	Por otro, se toman de a muestras mas pequeñas por limitaciones del hardware (USB y dongle) y se concatena las muestras para procesar el conjunto. 
+	Por otro, se toman de a muestras mas pequeñas, $N = \nStreaming$, por limitaciones del hardware (USB y dongle) y se concatena las muestras para procesar el conjunto, para disminuir el tiempo de transmisión de datos.
 	
 	\item Procesamiento: en línea \ref{code:thread-processing}, realiza lo mismo que en la sección anterior salvo por deénfasis que no se realiza, ya este caso se trata de optimizar el uso de variables y uso del procesador.
 
 	\item Reproducción: en línea \ref{code:thread-reproduce}, este hilo tiene la particularidad de usar la clase \emph{OutputStream} de la librería sounddevice en la que es posible almacenar muestras de audio en un buffer y reproducirlas rápidamente.
 \end{itemize}
 
-Por ultimo, los archivos de la GUI que usa las funciones de la radio son: \texttt{qt.py} en el que se ejecuta la ventana de control. El archivo \texttt{windows.py} configuran las variables de la interfaz (tamaño de ventana, titulo de ventana, barra de estado, etc) y cumple la función de nexo entre la radio en sí y los botones que se encuentran en el panel central. Y el archivo \texttt{centerWidget.py} crea los botones junto con el deslizable de frecuencia los agrupa de forma tal como se muestra en la figura \ref{fig:gui}.
+Por ultimo, los archivos de la GUI que usa las funciones de la radio son: \texttt{qt.py} en el que se ejecuta la ventana de control. El archivo \texttt{windows.py} configuran las variables de la interfaz (tamaño de ventana, titulo de ventana, barra de estado, etc) y cumple la función de nexo entre la radio en sí y los botones que se encuentran en el panel central.
+Y el archivo \texttt{centerWidget.py} crea los botones junto con el deslizable de frecuencia los agrupa de forma tal como se muestra en la figura \ref{fig:gui}.
 
 \begin{figure}[ht!]
 	\centering
@@ -180,3 +183,4 @@ Se puede llegar a la conclusión de que con el procesamiento digital genera resu
 Sin embargo, el lenguaje python, que es un lenguaje interpretado, no tiene suficiente rendimiento para optimizar los cálculos, lo que conlleva a un mal desempeño para el procesamiento de señales en tiempo real. En contrapartida existe lenguajes capaces de lograr el objetivo como Matlab, que a pesar de que es interpretado posee esta optimizado) o de mas bajo nivel como C entre otros.
 
 Existen módulos pendientes o en fase beta para la radio streaming que son: volumen (fase beta), cascada de la potencia promedio o waterfall FM, entre otros.
+Para futuras actualizaciones se podrán ver en el repositorio de \href{https://github.com/nternouski/comunicaciones}{github}.

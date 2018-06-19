@@ -11,13 +11,14 @@ import Queue as queue
 
 FS = 1140000			# Frecuencia de muestreo
 # FS = 2.04e6
-N_SAMPLE = 332800		# Cantidad de muestras
+# N_SAMPLE = 332800		# Cantidad de muestras
+N_SAMPLE = 83200
 F_BW = 180e3
 AUDIO_FREC = 44100.0
 # AUDIO_FREC = 22050.0
 N_TRAPS = 10
 TIME_BUFFER = 7 		# En segundos
-FRAMES = 3 				# Frames contatenado por muestra
+FRAMES = 4 				# Frames contatenado por muestra
 
 class Streaming:
 	def __init__(self, stationMHz):

@@ -14,6 +14,8 @@ import matplotlib.pyplot as plt
 # PLOT = 0 # No se calculan los gráficos
 PLOT = 1  # Se calcula los gráficos
 
+F_BW = 200e3  # FM tiene un ancho de banda teorico de BW=180/200 kHz
+
 
 def GetSample(f_station, f_offset, fs, N, gain='auto'):
 	"""
@@ -63,17 +65,16 @@ def FilterAndDownSample(x, fs):
 		x:	Señal a filtrar y
 		fs:	Frecuencia de muestreo
 	"""
-	f_bw = 200e3  # FM tiene un ancho de banda teorico de BW=180/200 kHz
 	# traps es el número de términos en el filtro, o el orden de filtro más uno.
 	n_taps = 50
 	# Calcule el filtro óptimo minimax utilizando el algoritmo de intercambio Remez.
-	coef = remez(n_taps, [0, f_bw, f_bw*1.5, fs/2], [1, 0], Hz=fs) # (*@ \label{code:remezFunction} @*)
+	coef = remez(n_taps, [0, F_BW, F_BW*1.4, fs/2], [1, 0], Hz=fs) # (*@ \label{code:remezFunction} @*)
 	x_filter = lfilter(coef, 1.0, x)
 
 	if PLOT:
 		PlotFilterCharacteristic(coef, fs)
 
-	dec_rate = int(fs / f_bw)
+	dec_rate = int(fs / F_BW)
 	x_downsample = x_filter[0::dec_rate]
 	# Se calcula la nueva frecuencia de muestreo
 	fs_y = fs / dec_rate
@@ -183,10 +184,12 @@ def DEP(x, x_name, file_name, fs, FM_signal=False):
 	plt.psd(x, NFFT=2048, Fs=fs, color="blue")
 	plt.title(x_name)
 	if FM_signal:
-		plt.axvspan(0,             15000,         color="red", alpha=0.3)
-		plt.axvspan(19000-500,     19000+500,     color="green", alpha=0.4)
-		plt.axvspan(19000*2-15000, 19000*2+15000, color="orange", alpha=0.3)
-		plt.axvspan(19000*3-1500,  19000*3+1500,  color="c", alpha=0.3)
+		plt.axvspan(0,             15000,			color="red",	alpha=0.3)
+		plt.axvspan(19000-500,     19000+500,		color="green",	alpha=0.4)
+		plt.axvspan(19000*2-15000, 19000*2+15000,	color="orange",	alpha=0.3)
+		plt.axvspan(19000*3-1500,  19000*3+1500,	color="c", 		alpha=0.3)
+	else:
+		plt.axvspan(-F_BW,     		F_BW,     		color="green",	alpha=0.3)
 	plt.ticklabel_format(style='plain', axis='y')
 	plt.savefig(file_name, dpi=300, bbox_inches='tight', pad_inches=0)
 	plt.close()
